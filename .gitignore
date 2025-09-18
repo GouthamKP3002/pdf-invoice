@@ -1,0 +1,45 @@
+# Node modules
+node_modules/
+apps/api/node_modules/
+packages/node_modules/
+
+# Build and output folders
+dist/
+build/
+apps/api/dist/
+apps/api/build/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Environment variables
+.env
+apps/api/.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Uploaded files (ignore contents but keep folder structure)
+apps/api/uploads/pdfs/*
+!apps/api/uploads/pdfs/.gitkeep
+
+# Coverage reports
+coverage/
+
+# Turbo repo cache
+.turbo/
+
+# VSCode settings (optional)
+.vscode/
+
+# Lock files (optional, if you don’t want them in git)
+# package-lock.json
+# yarn.lock

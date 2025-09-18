@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# TypeScript build output
+dist/
+build/
+*.tsbuildinfo
+
+# Uploaded files
+uploads/pdfs/
+
+# Ignore coverage outputs
+coverage/
+
+# Ignore lock files (optional, if you don’t want them in git)
+# package-lock.json
+# yarn.lock
+
+# VSCode settings (optional)
+.vscode/
