@@ -1,28 +1,30 @@
-import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
+// app/layout.tsx
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { Providers } from './providers';
+import { Toaster } from 'sonner';
+import './globals.css';
 
-
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PDF Dashboard',
-  description: 'PDF Review and Data Extraction Dashboard',
-}
+  title: 'PDF Dashboard - Invoice Extraction & Management',
+  description: 'AI-powered PDF invoice processing dashboard',
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body className={inter.className}>
-        <main className="min-h-screen bg-gray-50">
+        <Providers>
           {children}
-        </main>
-       
+          <Toaster position="top-right" richColors />
+        </Providers>
       </body>
     </html>
-  )
+  );
 }

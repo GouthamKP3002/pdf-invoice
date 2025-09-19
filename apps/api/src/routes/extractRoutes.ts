@@ -1,10 +1,8 @@
 // src/routes/extractRoutes.ts
 import express from 'express';
 import { extractTextFromPDF } from '../services/pdfService.js';
-import { extractDataSafely } from '../services/aiServiceManager.js'; // Use the safe wrapper
+import { extractDataSafely } from '../services/aiServiceManager.js';
 import { Invoice } from '../models/Invoices.js';
-import fs from 'fs';
-import path from 'path';
 
 const router = express.Router();
 
@@ -27,20 +25,20 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Check if file exists
-    const filePath = path.join('uploads/pdfs', `${fileId}.pdf`);
-    if (!fs.existsSync(filePath)) {
+    // Check if we already have an invoice record with blob URL
+    let invoice = await Invoice.findOne({ fileId });
+    if (!invoice) {
       return res.status(404).json({
         success: false,
-        error: 'PDF file not found'
+        error: 'Invoice record not found. Please upload the PDF first.'
       });
     }
 
-    const fileName = `${fileId}.pdf`;
+    const { fileName, fileUrl } = invoice;
 
-    // Extract text from PDF first
+    // Extract text from PDF using Vercel Blob URL
     console.log(`📄 Extracting text from PDF: ${fileName}`);
-    const extractedText = await extractTextFromPDF(filePath);
+    const extractedText = await extractTextFromPDF(fileUrl);
     
     if (!extractedText || extractedText.trim().length === 0) {
       return res.status(400).json({
@@ -52,7 +50,7 @@ router.post('/', async (req, res) => {
     console.log(`📝 Extracted ${extractedText.length} characters from PDF`);
     console.log(`🤖 Starting AI extraction with ${model.toUpperCase()}`);
     
-    // Use the safe extraction method - this will never throw or return undefined
+    // Use the safe extraction method
     const extractedData = await extractDataSafely(extractedText, model);
     
     // Check if we got mock data (indicates AI failure)
@@ -65,24 +63,11 @@ router.post('/', async (req, res) => {
       actualModelUsed = 'mock';
     }
 
-    // Create or update invoice record
-    let invoice = await Invoice.findOne({ fileId });
-    if (!invoice) {
-      invoice = new Invoice({
-        fileId,
-        fileName,
-        filePath,
-        extractionStatus: 'completed',
-        extractionModel: actualModelUsed,
-        vendor: extractedData.vendor,
-        invoice: extractedData.invoice
-      });
-    } else {
-      invoice.vendor = extractedData.vendor;
-      invoice.invoice = extractedData.invoice;
-      invoice.extractionStatus = 'completed';
-      invoice.extractionModel = actualModelUsed;
-    }
+    // Update invoice record with extracted data
+    invoice.vendor = extractedData.vendor;
+    invoice.invoice = extractedData.invoice;
+    invoice.extractionStatus = 'completed';
+    invoice.extractionModel = actualModelUsed;
     
     await invoice.save();
 
@@ -94,6 +79,7 @@ router.post('/', async (req, res) => {
       data: {
         fileId,
         fileName,
+        fileUrl,
         extractionModel: actualModelUsed,
         extractedData: {
           vendor: extractedData.vendor,
@@ -135,6 +121,7 @@ router.get('/:fileId', async (req, res) => {
       data: {
         fileId,
         fileName: invoice.fileName,
+        fileUrl: invoice.fileUrl,
         status: invoice.extractionStatus,
         model: invoice.extractionModel,
         extractedData: invoice.extractionStatus === 'completed' ? {
@@ -177,18 +164,11 @@ router.post('/retry/:fileId', async (req, res) => {
       });
     }
 
-    // Check if file still exists
-    const filePath = path.join('uploads/pdfs', `${fileId}.pdf`);
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        error: 'PDF file not found'
-      });
-    }
+    const { fileName, fileUrl } = invoice;
 
-    // Extract text from PDF
-    console.log(`📄 Re-extracting text from PDF: ${invoice.fileName}`);
-    const extractedText = await extractTextFromPDF(filePath);
+    // Extract text from PDF using Vercel Blob URL
+    console.log(`📄 Re-extracting text from PDF: ${fileName}`);
+    const extractedText = await extractTextFromPDF(fileUrl);
     
     if (!extractedText || extractedText.trim().length === 0) {
       return res.status(400).json({
@@ -226,7 +206,8 @@ router.post('/retry/:fileId', async (req, res) => {
         'Data re-extraction completed successfully',
       data: {
         fileId,
-        fileName: invoice.fileName,
+        fileName,
+        fileUrl,
         extractionModel: actualModelUsed,
         extractedData: {
           vendor: extractedData.vendor,

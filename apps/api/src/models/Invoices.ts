@@ -29,11 +29,13 @@ interface IInvoiceData {
 export interface IInvoice extends Document {
   fileId: string;
   fileName: string;
-  filePath?: string;
+  fileUrl: string; // Vercel Blob URL
+  blobName: string; // Blob path for deletion
+  fileSize?: number;
   vendor: IVendor;
   invoice: IInvoiceData;
   extractionStatus: 'pending' | 'processing' | 'completed' | 'failed';
-  extractionModel?: 'gemini' | 'groq';
+  extractionModel?: 'gemini' | 'groq' | 'mock';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,13 +48,13 @@ const LineItemSchema = new Schema<ILineItem>({
 });
 
 const VendorSchema = new Schema<IVendor>({
-  name: { type: String, required: false, default: '' }, // Make optional
+  name: { type: String, required: false, default: '' },
   address: { type: String },
   taxId: { type: String }
 });
 
 const InvoiceDataSchema = new Schema<IInvoiceData>({
-  number: { type: String, required: true },
+  number: { type: String, required: false },
   date: { type: String, required: true },
   currency: { type: String, default: 'USD' },
   subtotal: { type: Number },
@@ -66,7 +68,9 @@ const InvoiceDataSchema = new Schema<IInvoiceData>({
 const InvoiceSchema = new Schema<IInvoice>({
   fileId: { type: String, required: true, unique: true },
   fileName: { type: String, required: true },
-  filePath: { type: String },
+  fileUrl: { type: String, required: true }, // Vercel Blob URL
+  blobName: { type: String, required: true }, // For blob deletion
+  fileSize: { type: Number },
   vendor: { type: VendorSchema, required: true },
   invoice: { type: InvoiceDataSchema, required: true },
   extractionStatus: { 
@@ -76,7 +80,7 @@ const InvoiceSchema = new Schema<IInvoice>({
   },
   extractionModel: { 
     type: String, 
-    enum: ['gemini', 'groq'] 
+    enum: ['gemini', 'groq', 'mock'] 
   }
 }, {
   timestamps: true
