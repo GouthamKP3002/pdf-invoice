@@ -1,14 +1,56 @@
 // src/services/pdfService.ts
 import fetch from 'node-fetch';
 
-// Dynamic import to avoid initialization issues
-async function getPdfParser() {
+// PDF.js extraction function
+async function extractWithPDFJS(buffer: Buffer): Promise<string> {
   try {
-    const pdfModule = await import('pdf-parse');
-    return pdfModule.default;
+    // Dynamic import of pdfjs-dist
+    const pdfjsLib = await import('pdfjs-dist');
+    
+    // In Node.js environments, we don't need/can't use web workers
+    // Set worker to null to disable worker usage
+    pdfjsLib.GlobalWorkerOptions.workerSrc;
+    
+    const loadingTask = pdfjsLib.getDocument({
+      data: new Uint8Array(buffer),
+      useSystemFonts: true,
+      disableFontFace: true,
+      // Disable worker for Node.js
+      useWorkerFetch: false,
+    });
+    
+    const pdf = await loadingTask.promise;
+    let fullText = '';
+    
+    console.log(`📄 PDF has ${pdf.numPages} pages`);
+    
+    // Extract text from all pages
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      try {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        
+        const pageText = textContent.items
+          .map((item: any) => {
+            // Handle different item types
+            if ('str' in item) {
+              return item.str;
+            }
+            return '';
+          })
+          .join(' ');
+        
+        fullText += `Page ${pageNum}:\n${pageText}\n\n`;
+        console.log(`📄 Extracted text from page ${pageNum}: ${pageText.length} characters`);
+      } catch (pageError) {
+        console.warn(`⚠️ Failed to extract text from page ${pageNum}:`, pageError);
+      }
+    }
+    
+    return fullText.trim();
   } catch (error) {
-    console.error('Failed to load pdf-parse module:', error);
-    throw new Error('PDF parsing module not available');
+    console.error('PDF.js extraction failed:', error);
+    throw error;
   }
 }
 
@@ -28,41 +70,36 @@ export async function extractTextFromPDF(fileUrl: string): Promise<string> {
     
     console.log(`📄 Downloaded PDF buffer: ${dataBuffer.length} bytes`);
     
-    // Dynamically import and use pdf-parse
-    const pdf = await getPdfParser();
-    const pdfData = await pdf(dataBuffer);
+    // Use PDF.js to extract text
+    const extractedText = await extractWithPDFJS(dataBuffer);
     
-    if (!pdfData.text || pdfData.text.trim().length === 0) {
+    if (!extractedText || extractedText.trim().length === 0) {
       throw new Error('No text content found in PDF');
     }
 
-    console.log(`📄 Extracted ${pdfData.text.length} characters from PDF`);
-    console.log(`📊 PDF metadata: ${pdfData.numpages} pages`);
-
-    return pdfData.text;
+    console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF`);
+    return extractedText;
+    
   } catch (error) {
     console.error('❌ PDF text extraction failed:', error);
     throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
-// Alternative function that accepts buffer directly (useful for direct processing)
 export async function extractTextFromPDFBuffer(buffer: Buffer): Promise<string> {
   try {
     console.log(`📄 Processing PDF buffer: ${buffer.length} bytes`);
     
-    // Dynamically import and use pdf-parse
-    const pdf = await getPdfParser();
-    const pdfData = await pdf(buffer);
+    // Use PDF.js to extract text
+    const extractedText = await extractWithPDFJS(buffer);
     
-    if (!pdfData.text || pdfData.text.trim().length === 0) {
+    if (!extractedText || extractedText.trim().length === 0) {
       throw new Error('No text content found in PDF');
     }
 
-    console.log(`📄 Extracted ${pdfData.text.length} characters from PDF`);
-    console.log(`📊 PDF metadata: ${pdfData.numpages} pages`);
-
-    return pdfData.text;
+    console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF`);
+    return extractedText;
+    
   } catch (error) {
     console.error('❌ PDF text extraction failed:', error);
     throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
