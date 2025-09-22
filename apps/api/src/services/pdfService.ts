@@ -1,22 +1,16 @@
 // src/services/pdfService.ts
 import fetch from 'node-fetch';
 
-// PDF.js extraction function
 async function extractWithPDFJS(buffer: Buffer): Promise<string> {
   try {
-    // Dynamic import of pdfjs-dist
-    const pdfjsLib = await import('pdfjs-dist');
-    
-    // In Node.js environments, we don't need/can't use web workers
-    // Set worker to null to disable worker usage
-    pdfjsLib.GlobalWorkerOptions.workerSrc;
+    // Import the legacy build which is more stable for Node.js
+    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
     
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
       useSystemFonts: true,
       disableFontFace: true,
-      // Disable worker for Node.js
-      useWorkerFetch: false,
+      standardFontDataUrl: undefined, // Disable font loading
     });
     
     const pdf = await loadingTask.promise;
@@ -24,7 +18,6 @@ async function extractWithPDFJS(buffer: Buffer): Promise<string> {
     
     console.log(`📄 PDF has ${pdf.numPages} pages`);
     
-    // Extract text from all pages
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       try {
         const page = await pdf.getPage(pageNum);
@@ -32,7 +25,6 @@ async function extractWithPDFJS(buffer: Buffer): Promise<string> {
         
         const pageText = textContent.items
           .map((item: any) => {
-            // Handle different item types
             if ('str' in item) {
               return item.str;
             }
@@ -58,7 +50,6 @@ export async function extractTextFromPDF(fileUrl: string): Promise<string> {
   try {
     console.log(`📄 Fetching PDF from URL: ${fileUrl}`);
     
-    // Fetch the PDF from Vercel Blob
     const response = await fetch(fileUrl);
     
     if (!response.ok) {
@@ -70,7 +61,6 @@ export async function extractTextFromPDF(fileUrl: string): Promise<string> {
     
     console.log(`📄 Downloaded PDF buffer: ${dataBuffer.length} bytes`);
     
-    // Use PDF.js to extract text
     const extractedText = await extractWithPDFJS(dataBuffer);
     
     if (!extractedText || extractedText.trim().length === 0) {
@@ -90,7 +80,6 @@ export async function extractTextFromPDFBuffer(buffer: Buffer): Promise<string> 
   try {
     console.log(`📄 Processing PDF buffer: ${buffer.length} bytes`);
     
-    // Use PDF.js to extract text
     const extractedText = await extractWithPDFJS(buffer);
     
     if (!extractedText || extractedText.trim().length === 0) {
