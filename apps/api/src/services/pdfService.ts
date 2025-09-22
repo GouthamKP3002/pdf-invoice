@@ -1,6 +1,16 @@
 // src/services/pdfService.ts
-import pdf from 'pdf-parse';
 import fetch from 'node-fetch';
+
+// Dynamic import to avoid initialization issues
+async function getPdfParser() {
+  try {
+    const pdfModule = await import('pdf-parse');
+    return pdfModule.default;
+  } catch (error) {
+    console.error('Failed to load pdf-parse module:', error);
+    throw new Error('PDF parsing module not available');
+  }
+}
 
 export async function extractTextFromPDF(fileUrl: string): Promise<string> {
   try {
@@ -18,7 +28,8 @@ export async function extractTextFromPDF(fileUrl: string): Promise<string> {
     
     console.log(`📄 Downloaded PDF buffer: ${dataBuffer.length} bytes`);
     
-    // Parse the PDF
+    // Dynamically import and use pdf-parse
+    const pdf = await getPdfParser();
     const pdfData = await pdf(dataBuffer);
     
     if (!pdfData.text || pdfData.text.trim().length === 0) {
@@ -40,6 +51,8 @@ export async function extractTextFromPDFBuffer(buffer: Buffer): Promise<string> 
   try {
     console.log(`📄 Processing PDF buffer: ${buffer.length} bytes`);
     
+    // Dynamically import and use pdf-parse
+    const pdf = await getPdfParser();
     const pdfData = await pdf(buffer);
     
     if (!pdfData.text || pdfData.text.trim().length === 0) {
