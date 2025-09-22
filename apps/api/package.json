@@ -21,7 +21,7 @@
     "mongodb",
     "express"
   ],
-  "author": "Your Name",
+  "author": "Goutham K P",
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",

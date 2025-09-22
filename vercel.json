@@ -1,29 +1,13 @@
-
 {
   "version": 2,
-  "builds": [
+  "projects": [
     {
-      "src": "apps/api/**/*.js",
-      "use": "@vercel/node"
+      "name": "pdf-dashboard-web",
+      "source": "apps/web"
     },
     {
-      "src": "apps/web/package.json",
-      "use": "@vercel/next"
+      "name": "pdf-dashboard-api", 
+      "source": "apps/api"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "apps/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "apps/web/$1"
-    }
-  ],
-  "functions": {
-    "apps/api/**/*.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
