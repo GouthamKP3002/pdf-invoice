@@ -32,21 +32,57 @@ export default function PDFViewer({ fileUrl, fileName }: PDFViewerProps) {
   const loadPDF = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Load PDF.js dynamically
-      const pdfjsLib = await import('pdfjs-dist');
+      // Load PDF.js from CDN instead of npm module to avoid build issues
+      if (typeof window !== 'undefined') {
+        // Check if PDF.js is already loaded
+        if (!(window as any).pdfjsLib) {
+          // Load PDF.js script dynamically
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          script.onload = () => {
+            // Set worker source after PDF.js is loaded
+            (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc = 
+              'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            loadPDFDocument();
+          };
+          script.onerror = () => {
+            setError('Failed to load PDF.js library');
+            setLoading(false);
+          };
+          document.head.appendChild(script);
+        } else {
+          loadPDFDocument();
+        }
+      }
+    } catch (err) {
+      console.error('Error loading PDF:', err);
+      setError('Failed to load PDF');
+      setLoading(false);
+    }
+  };
+
+  const loadPDFDocument = async () => {
+    try {
+      const pdfjsLib = (window as any).pdfjsLib;
+      if (!pdfjsLib) {
+        throw new Error('PDF.js library not loaded');
+      }
+
+      const pdf = await pdfjsLib.getDocument({
+        url: fileUrl,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true,
+      }).promise;
       
-      // Set worker source
-      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
-      
-      const pdf = await pdfjsLib.getDocument(fileUrl).promise;
       setPdfDoc(pdf);
       setTotalPages(pdf.numPages);
       setCurrentPage(1);
       setLoading(false);
     } catch (err) {
-      console.error('Error loading PDF:', err);
-      setError('Failed to load PDF');
+      console.error('Error loading PDF document:', err);
+      setError(`Failed to load PDF: ${err instanceof Error ? err.message : 'Unknown error'}`);
       setLoading(false);
     }
   };
