@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors({
-  origin: '*' ,
+  origin: '*',
   credentials: true
 }));
 app.use(express.json({ limit: '50mb' }));
@@ -48,9 +48,9 @@ if (missingEnvVars.length > 0) {
 console.log('✅ Vercel Blob storage configured');
 
 // Routes
-app.use('/', uploadRoutes);           // Handles /upload routes
-app.use('/extract', extractRoutes);   // Handles /extract routes  
-app.use('/invoices', invoiceRoutes);  // Handles /invoices CRUD routes
+app.use('/', uploadRoutes);
+app.use('/extract', extractRoutes);
+app.use('/invoices', invoiceRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -95,35 +95,6 @@ app.get('/api-docs', (req, res) => {
         'GET /health': 'Health check with feature status',
         'GET /api-docs': 'API documentation'
       }
-    },
-    workflow: {
-      description: 'Complete PDF processing workflow',
-      steps: [
-        '1. POST /upload - Upload PDF to Vercel Blob',
-        '2. POST /invoices - Create invoice record with blob info',
-        '3. POST /extract - Extract data using AI (Gemini/Groq)', 
-        '4. GET /invoices - List processed invoices',
-        '5. PUT /invoices/:id - Edit extracted data',
-        '6. DELETE /invoices/:id - Remove invoice and blob file'
-      ]
-    },
-    storage: {
-      type: 'vercel-blob',
-      features: ['Public URLs', 'CDN delivery', 'Automatic cleanup'],
-      limits: {
-        maxFileSize: '25MB',
-        allowedTypes: ['application/pdf']
-      }
-    },
-    exampleRequests: {
-      upload: 'curl -F "pdf=@invoice.pdf" http://localhost:3001/upload',
-      createInvoice: `curl -X POST -H "Content-Type: application/json" \\
-  -d '{"fileId":"uuid","fileName":"invoice.pdf","fileUrl":"blob-url","blobName":"pdfs/uuid.pdf"}' \\
-  http://localhost:3001/invoices`,
-      extract: `curl -X POST -H "Content-Type: application/json" \\
-  -d '{"fileId":"uuid","model":"gemini"}' \\
-  http://localhost:3001/extract`,
-      getInvoices: 'curl "http://localhost:3001/invoices?page=1&limit=10&q=vendor"'
     }
   });
 });
@@ -153,7 +124,6 @@ app.use('*', (req, res) => {
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('❌ Server error:', error);
   
-  // Handle Vercel Blob specific errors
   if (error.message && error.message.includes('blob')) {
     return res.status(502).json({
       success: false,
@@ -169,17 +139,16 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 });
 
-module.exports = app;
-
-
+// For local development
 if (process.env.NODE_ENV !== 'production') {
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📚 API docs available at http://localhost:${PORT}/api-docs`);
-  console.log(`💾 Using Vercel Blob storage for file uploads`);
-  console.log(`🗄️ MongoDB: ${process.env.MONGODB_URI ? 'Connected' : 'Not configured'}`);
-  console.log(`🤖 AI Models: ${process.env.GEMINI_API_KEY ? 'Gemini' : ''}${process.env.GEMINI_API_KEY && process.env.GROQ_API_KEY ? ' + ' : ''}${process.env.GROQ_API_KEY ? 'Groq' : ''}`);
-});
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`📚 API docs available at http://localhost:${PORT}/api-docs`);
+    console.log(`💾 Using Vercel Blob storage for file uploads`);
+    console.log(`🗄️ MongoDB: ${process.env.MONGODB_URI ? 'Connected' : 'Not configured'}`);
+    console.log(`🤖 AI Models: ${process.env.GEMINI_API_KEY ? 'Gemini' : ''}${process.env.GEMINI_API_KEY && process.env.GROQ_API_KEY ? ' + ' : ''}${process.env.GROQ_API_KEY ? 'Groq' : ''}`);
+  });
 }
 
-// Start server
+// Export for Vercel (ES Module syntax)
+export default app;
