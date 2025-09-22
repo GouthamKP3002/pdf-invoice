@@ -19,8 +19,6 @@ async function extractWithPDFJS(buffer: Buffer): Promise<string> {
     // Dynamic import of pdfjs-dist
     const pdfjsLib = await import('pdfjs-dist');
     
-    // Don't use worker in Node.js
-    pdfjsLib.GlobalWorkerOptions.workerSrc;
     
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
