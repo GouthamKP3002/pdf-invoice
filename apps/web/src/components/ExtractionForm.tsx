@@ -528,7 +528,7 @@ export default function ExtractionForm({
                 </div>
                 
                 <div className="text-right">
-                  <span className="font-semibold">Total: ${item.total.toFixed(2)}</span>
+                  <span className="font-semibold">Total: ${(item.total || 0).toFixed(2)}</span>
                 </div>
               </div>
             ))}
@@ -550,27 +550,27 @@ export default function ExtractionForm({
         </Card>
 
         {/* Invoice Totals */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Invoice Totals</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-right">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span className="font-medium">${formData.invoice.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax ({formData.invoice.taxPercent}%):</span>
-                <span className="font-medium">${((formData.invoice.subtotal * formData.invoice.taxPercent) / 100).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total:</span>
-                <span>${formData.invoice.total.toFixed(2)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <Card>
+  <CardHeader>
+    <CardTitle className="text-base">Invoice Totals</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <div className="space-y-2 text-right">
+      <div className="flex justify-between">
+        <span>Subtotal:</span>
+        <span className="font-medium">${(formData.invoice.subtotal || 0).toFixed(2)}</span>
+      </div>
+      <div className="flex justify-between">
+        <span>Tax ({formData.invoice.taxPercent || 0}%):</span>
+        <span className="font-medium">${(((formData.invoice.subtotal || 0) * (formData.invoice.taxPercent || 0)) / 100).toFixed(2)}</span>
+      </div>
+      <div className="flex justify-between text-lg font-bold border-t pt-2">
+        <span>Total:</span>
+        <span>${(formData.invoice.total || 0).toFixed(2)}</span>
+      </div>
+    </div>
+  </CardContent>
+</Card>
       </div>
     </div>
   );

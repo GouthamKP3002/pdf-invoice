@@ -1,16 +1,33 @@
 // src/services/pdfService.ts
 import fetch from 'node-fetch';
 
+// Try pdf-parse as a simpler alternative
+async function extractWithPDFParse(buffer: Buffer): Promise<string> {
+  try {
+    const pdfParse = await import('pdf-parse');
+    const data = await pdfParse.default(buffer);
+    return data.text;
+  } catch (error) {
+    console.error('pdf-parse failed:', error);
+    throw error;
+  }
+}
+
+// PDF.js extraction function with better error handling
 async function extractWithPDFJS(buffer: Buffer): Promise<string> {
   try {
-    // Import the legacy build which is more stable for Node.js
-    const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.js');
+    // Dynamic import of pdfjs-dist
+    const pdfjsLib = await import('pdfjs-dist');
+    
+    // Don't use worker in Node.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc;
     
     const loadingTask = pdfjsLib.getDocument({
       data: new Uint8Array(buffer),
       useSystemFonts: true,
       disableFontFace: true,
-      standardFontDataUrl: undefined, // Disable font loading
+      useWorkerFetch: false,
+      isEvalSupported: false,
     });
     
     const pdf = await loadingTask.promise;
@@ -18,6 +35,7 @@ async function extractWithPDFJS(buffer: Buffer): Promise<string> {
     
     console.log(`📄 PDF has ${pdf.numPages} pages`);
     
+    // Extract text from all pages
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       try {
         const page = await pdf.getPage(pageNum);
@@ -25,6 +43,7 @@ async function extractWithPDFJS(buffer: Buffer): Promise<string> {
         
         const pageText = textContent.items
           .map((item: any) => {
+            // Handle different item types
             if ('str' in item) {
               return item.str;
             }
@@ -50,6 +69,7 @@ export async function extractTextFromPDF(fileUrl: string): Promise<string> {
   try {
     console.log(`📄 Fetching PDF from URL: ${fileUrl}`);
     
+    // Fetch the PDF from Vercel Blob
     const response = await fetch(fileUrl);
     
     if (!response.ok) {
@@ -61,13 +81,25 @@ export async function extractTextFromPDF(fileUrl: string): Promise<string> {
     
     console.log(`📄 Downloaded PDF buffer: ${dataBuffer.length} bytes`);
     
+    // Try pdf-parse first as it's simpler and more reliable for Node.js
+    try {
+      const extractedText = await extractWithPDFParse(dataBuffer);
+      if (extractedText && extractedText.trim().length > 0) {
+        console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF using pdf-parse`);
+        return extractedText;
+      }
+    } catch (parseError) {
+      console.warn('pdf-parse failed, trying PDF.js:', parseError);
+    }
+    
+    // Fallback to PDF.js
     const extractedText = await extractWithPDFJS(dataBuffer);
     
     if (!extractedText || extractedText.trim().length === 0) {
       throw new Error('No text content found in PDF');
     }
 
-    console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF`);
+    console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF using PDF.js`);
     return extractedText;
     
   } catch (error) {
@@ -80,13 +112,25 @@ export async function extractTextFromPDFBuffer(buffer: Buffer): Promise<string> 
   try {
     console.log(`📄 Processing PDF buffer: ${buffer.length} bytes`);
     
+    // Try pdf-parse first
+    try {
+      const extractedText = await extractWithPDFParse(buffer);
+      if (extractedText && extractedText.trim().length > 0) {
+        console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF using pdf-parse`);
+        return extractedText;
+      }
+    } catch (parseError) {
+      console.warn('pdf-parse failed, trying PDF.js:', parseError);
+    }
+    
+    // Fallback to PDF.js
     const extractedText = await extractWithPDFJS(buffer);
     
     if (!extractedText || extractedText.trim().length === 0) {
       throw new Error('No text content found in PDF');
     }
 
-    console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF`);
+    console.log(`📄 Successfully extracted ${extractedText.length} characters from PDF using PDF.js`);
     return extractedText;
     
   } catch (error) {
