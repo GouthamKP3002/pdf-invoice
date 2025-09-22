@@ -53,7 +53,7 @@ app.use('/extract', extractRoutes);   // Handles /extract routes
 app.use('/invoices', invoiceRoutes);  // Handles /invoices CRUD routes
 
 // Health check endpoint
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'PDF Dashboard API is running',
@@ -134,7 +134,7 @@ app.get('/', (req, res) => {
     success: true,
     message: 'Welcome to the PDF Dashboard API with Vercel Blob storage',
     documentation: '/api-docs',
-    health: '/health',
+    health: '/api/health',
     version: '1.0.0'
   });
 });
@@ -144,7 +144,7 @@ app.use('*', (req, res) => {
   res.status(404).json({
     success: false,
     error: 'Route not found',
-    availableRoutes: ['/upload', '/extract', '/invoices', '/health', '/api-docs'],
+    availableRoutes: ['/upload', '/extract', '/invoices', '/api/health', '/api-docs'],
     documentation: '/api-docs'
   });
 });
@@ -169,7 +169,10 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Start server
+module.exports = app;
+
+
+if (process.env.NODE_ENV !== 'production') {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📚 API docs available at http://localhost:${PORT}/api-docs`);
@@ -177,3 +180,6 @@ app.listen(PORT, () => {
   console.log(`🗄️ MongoDB: ${process.env.MONGODB_URI ? 'Connected' : 'Not configured'}`);
   console.log(`🤖 AI Models: ${process.env.GEMINI_API_KEY ? 'Gemini' : ''}${process.env.GEMINI_API_KEY && process.env.GROQ_API_KEY ? ' + ' : ''}${process.env.GROQ_API_KEY ? 'Groq' : ''}`);
 });
+}
+
+// Start server

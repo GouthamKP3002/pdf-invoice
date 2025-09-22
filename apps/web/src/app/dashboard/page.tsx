@@ -76,11 +76,11 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDataExtracted = (data: any) => {
+  const handleDataExtracted = (data: unknown) => {
     setExtractionData(data);
   };
 
-  const handleDataSaved = (data: any) => {
+  const handleDataSaved = (data: unknown) => {
     // Handle successful save - could show notification or update state
     console.log('Data saved successfully:', data);
   };

@@ -40,8 +40,8 @@ interface ExtractedData {
 interface ExtractionFormProps {
   fileId?: string;
   initialData?: ExtractedData;
-  onDataExtracted?: (data: any) => void;
-  onDataSaved?: (data: any) => void;
+  onDataExtracted?: (data: unknown) => void;
+  onDataSaved?: (data: unknown) => void;
   onDataDeleted?: () => void;
   invoiceId?: string;
 }
@@ -203,14 +203,14 @@ export default function ExtractionForm({
     }));
   };
 
-  const updateInvoiceField = (field: keyof typeof formData.invoice, value: any) => {
+  const updateInvoiceField = (field: keyof typeof formData.invoice, value: unknown) => {
     setFormData(prev => ({
       ...prev,
       invoice: { ...prev.invoice, [field]: value }
     }));
   };
 
-  const updateLineItem = (index: number, field: keyof LineItem, value: any) => {
+  const updateLineItem = (index: number, field: keyof LineItem, value: unknown) => {
     const updatedLineItems = [...formData.invoice.lineItems];
     updatedLineItems[index] = { ...updatedLineItems[index], [field]: value };
     

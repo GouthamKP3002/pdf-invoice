@@ -1,7 +1,5 @@
 // app/page.tsx - Root page that redirects to dashboard
 'use client';
-
-import { useEffect } from 'react';
 import { FileText, Upload, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

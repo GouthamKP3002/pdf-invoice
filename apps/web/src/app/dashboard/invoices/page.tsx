@@ -50,7 +50,7 @@ export default function InvoicesPage() {
     setEditingInvoice(null);
   };
 
-  const handleDataSaved = (data: any) => {
+  const handleDataSaved = (data: unknown) => {
     // Update the editing invoice with saved data
     if (editingInvoice && data) {
       setEditingInvoice({ ...editingInvoice, ...data });
