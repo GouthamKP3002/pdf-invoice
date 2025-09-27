@@ -3,8 +3,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Updated to use currently supported models with fallback strategy
 const GEMINI_MODELS = {
-  primary: 'gemini-1.5-flash',
-  fallback: 'gemini-1.5-flash-8b'
+  primary: 'gemini-2.5-flash',    
+  fallback: 'gemini-1.5-flash' 
 } as const;
 
 const prompt = `
